@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>О.С.Ж.Д.</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #050505; color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden; transition: all 0.8s ease;
+        }
+        /* Скрытая панель управления */
+        #admin-panel {
+            position: fixed; top: -100px; left: 0; width: 100%;
+            height: 60px; background: rgba(255,255,255,0.1);
+            border-bottom: 2px solid #4285F4;
+            display: flex; align-items: center; padding: 0 20px;
+            backdrop-filter: blur(15px); z-index: 9999;
+            transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #admin-panel.visible { top: 0; }
+        #cmd-input {
+            width: 90%; background: transparent; border: none;
+            color: #0f0; font-family: monospace; font-size: 16px; outline: none;
+        }
+        #viewport {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 100%; text-align: center;
+        }
+        #main-el { transition: all 0.6s ease; text-transform: uppercase; }
+        .watermark { position: fixed; bottom: 10px; right: 10px; opacity: 0.2; font-size: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="admin-panel">
+        <input type="text" id="cmd-input" placeholder="Введите код управления (О.С.Ж.Д. Admin)...">
+    </div>
+
+    <div id="viewport">
+        <h1 id="main-el">О.С.Ж.Д.</h1>
+    </div>
+
+    <div class="watermark">Официальный Сайт Желтого Домика</div>
+
+    <script>
+        const panel = document.getElementById('admin-panel');
+        const input = document.getElementById('cmd-input');
+        const display = document.getElementById('main-el');
+
+        // Вызов панели по секретной комбинации Ctrl + Alt + S
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.altKey && e.code === 'KeyS') {
+                panel.classList.toggle('visible');
+                if(panel.classList.contains('visible')) input.focus();
+            }
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const code = input.value;
+                localStorage.setItem('oszhd_style', code);
+                applyCode(code);
+                input.value = ""; // Очистка после ввода
+            }
+        });
+
+        function applyCode(fullCode) {
+            if(!fullCode) return;
+            const lines = fullCode.split(';');
+            lines.forEach(line => {
+                const [cmd, val] = line.split(':').map(s => s?.trim());
+                if (!cmd || !val) return;
+                const c = cmd.toLowerCase();
+                const v = val.toLowerCase();
+
+                if (c === 'текст') display.innerText = val;
+                if (c === 'цвет') display.style.color = v === 'голубой' ? 'deepskyblue' : v;
+                if (c === 'размер') display.style.fontSize = isNaN(val) ? val : val + 'px';
+                if (c === 'фон') document.body.style.background = v;
+                if (c === 'шрифт') display.style.fontFamily = val;
+            });
+        }
+
+        // Автозагрузка при открытии
+        window.onload = () => {
+            const saved = localStorage.getItem('oszhd_style');
+            if (saved) applyCode(saved);
+        };
+    </script>
+</body>
+</html>
