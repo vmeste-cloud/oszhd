@@ -2,92 +2,102 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>О.С.Ж.Д.</title>
+    <title>О.С.Ж.Д. | Official</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #050505; color: #fff;
-            font-family: 'Segoe UI', sans-serif;
+            background-color: #fff; /* Белая тема */
+            color: #000;
+            font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif; /* Шрифт как пером */
             overflow: hidden; transition: all 0.8s ease;
         }
-        /* Скрытая панель управления */
-        #admin-panel {
-            position: fixed; top: -100px; left: 0; width: 100%;
-            height: 60px; background: rgba(255,255,255,0.1);
-            border-bottom: 2px solid #4285F4;
-            display: flex; align-items: center; padding: 0 20px;
-            backdrop-filter: blur(15px); z-index: 9999;
-            transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        /* Текст в правом верхнем углу */
+        #display { 
+            position: absolute;
+            top: 50px;
+            right: 50px;
+            font-size: 16px;
+            text-align: right;
+            transition: all 0.5s ease;
         }
-        #admin-panel.visible { top: 0; }
-        #cmd-input {
-            width: 90%; background: transparent; border: none;
-            color: #0f0; font-family: monospace; font-size: 16px; outline: none;
+
+        /* Тот самый Желтый Домик (геометрические фигуры) */
+        #house-container {
+            position: absolute;
+            left: 5%;
+            bottom: 0;
+            width: 40%;
+            height: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
         }
-        #viewport {
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; height: 100%; text-align: center;
+
+        .roof {
+            width: 0; height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-bottom: 120px solid #f1c40f; /* Желтая крыша */
         }
-        #main-el { transition: all 0.6s ease; text-transform: uppercase; }
-        .watermark { position: fixed; bottom: 10px; right: 10px; opacity: 0.2; font-size: 10px; }
+
+        .walls {
+            width: 250px;
+            height: 300px;
+            background-color: #f1c40f; /* Желтые стены */
+            border: 2px solid #e1b100;
+        }
+
+        /* Панель управления (Ctrl+Alt+S) */
+        #admin-bar {
+            position: fixed; top: -60px; left: 0; width: 100%; height: 40px;
+            background: rgba(0,0,0,0.05); border-bottom: 1px solid #ccc;
+            display: flex; align-items: center; padding: 0 20px; transition: 0.4s; z-index: 9999;
+        }
+        #admin-bar.active { top: 0; }
+        #cmd { width: 100%; background: transparent; border: none; color: #333; outline: none; }
     </style>
 </head>
 <body>
 
-    <div id="admin-panel">
-        <input type="text" id="cmd-input" placeholder="Введите код управления (О.С.Ж.Д. Admin)...">
+    <div id="admin-bar">
+        <input type="text" id="cmd" placeholder="Команды управления...">
     </div>
 
-    <div id="viewport">
-        <h1 id="main-el">О.С.Ж.Д.</h1>
+    <!-- Левая половина: Желтый домик -->
+    <div id="house-container">
+        <div class="roof"></div>
+        <div class="walls"></div>
     </div>
 
-    <div class="watermark">Официальный Сайт Желтого Домика</div>
+    <!-- Правая верхняя часть: Текст -->
+    <div id="display">ОСЖД</div>
 
     <script>
-        const panel = document.getElementById('admin-panel');
-        const input = document.getElementById('cmd-input');
-        const display = document.getElementById('main-el');
+        const bar = document.getElementById('admin-bar');
+        const input = document.getElementById('cmd');
+        const view = document.getElementById('display');
 
-        // Вызов панели по секретной комбинации Ctrl + Alt + S
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.altKey && e.code === 'KeyS') {
-                panel.classList.toggle('visible');
-                if(panel.classList.contains('visible')) input.focus();
+                bar.classList.toggle('active');
+                if(bar.classList.contains('active')) input.focus();
             }
         });
 
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const code = input.value;
-                localStorage.setItem('oszhd_style', code);
-                applyCode(code);
-                input.value = ""; // Очистка после ввода
+                const parts = input.value.split(';');
+                parts.forEach(p => {
+                    const [c, v] = p.split(':').map(s => s?.trim());
+                    if (c === 'текст') view.innerText = v.toUpperCase();
+                    if (c === 'размер') view.style.fontSize = v + 'px';
+                    if (c === 'цвет') view.style.color = v;
+                });
+                input.value = "";
             }
         });
-
-        function applyCode(fullCode) {
-            if(!fullCode) return;
-            const lines = fullCode.split(';');
-            lines.forEach(line => {
-                const [cmd, val] = line.split(':').map(s => s?.trim());
-                if (!cmd || !val) return;
-                const c = cmd.toLowerCase();
-                const v = val.toLowerCase();
-
-                if (c === 'текст') display.innerText = val;
-                if (c === 'цвет') display.style.color = v === 'голубой' ? 'deepskyblue' : v;
-                if (c === 'размер') display.style.fontSize = isNaN(val) ? val : val + 'px';
-                if (c === 'фон') document.body.style.background = v;
-                if (c === 'шрифт') display.style.fontFamily = val;
-            });
-        }
-
-        // Автозагрузка при открытии
-        window.onload = () => {
-            const saved = localStorage.getItem('oszhd_style');
-            if (saved) applyCode(saved);
-        };
     </script>
 </body>
 </html>
